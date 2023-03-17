@@ -1,83 +1,142 @@
-export class Item {
-  constructor(name, sellIn, quality) {
-    this.name = name;
-    this.sellIn = sellIn;
-    this.quality = quality;
-  }
-}
+import { expect, describe, it } from "vitest";
+import { Item, items, updateQuality, Basic, Legendary, Brie, Passes, Conjured } from "./gilded-rose.js";
 
-export class Basic extends Item{
-  updateQuality() {
-    if (this.sellIn > 0) {
-      this.quality -= 1;
-    }
-    else {
-      this.quality -= 2;
-    }
-    if (this.quality < 0) {
-      this.quality = 0;
-    }
-  }
-}
+describe("Basic-Items", () => {
+  it("reduces quality and sellIn of basic items by 1", () => {
+    const testItem = new Basic("basic", 5, 3);
+    items.push(testItem);
 
-export class Brie extends Item{
-  updateQuality() {
-    this.quality += 1;
-    if (this.quality > 50) {
-      this.quality = 50;
-    }
-  }
-}
+    updateQuality();
 
-export class Legendary extends Item{
-    updateQuality() {
-      // Do Nothing
-  }
-}
+    expect(testItem.sellIn).toBe(4);
+    expect(testItem.quality).toBe(2);
+  });
 
-export class Passes extends Item{
-    updateQuality() {
-      if (this.sellIn < 0) {
-        this.quality = 0;
-      }
-      else if (this.sellIn < 5) {
-        this.quality += 3;
-      }
-      else if (this.sellIn < 10) {
-        this.quality += 2;
-      }
-      else {
-        this.quality += 1;
-      }
-  }
-}
+  it("reduces quality of expired sellIn items of basic items by 2", () => {
+    const testItem = new Basic("basic", -5, 3);
+    items.push(testItem);
 
-export class Conjured extends Basic{
-    updateQuality() {
-      super.updateQuality();
-      super.updateQuality();
-    }
-  }
+    updateQuality();
 
-export let items = [];
+    expect(testItem.sellIn).toBe(-6);
+    expect(testItem.quality).toBe(1);
+  });
 
-items.push(new Basic("+5 Dexterity Vest", 10, 20));
-items.push(new Brie("Aged Brie", 2, 0));
-items.push(new Basic("Elixir of the Mongoose", 5, 7));
-items.push(new Legendary("Sulfuras, Hand of Ragnaros", 0, 80));
-items.push(new Passes("Backstage passes to a TAFKAL80ETC concert", 15, 20));
-items.push(new Conjured("Conjured Mana Cake", 3, 6));
+  it("Quality cannot go below 0", () => {
+    const testItem = new Basic("basic", -5, 1);
+    items.push(testItem);
 
+    updateQuality();
 
-export const updateQuality = () => {
-  for (let item of items) {
-    if (item.constructor.name != 'Legendary') {
-      item.sellIn -= 1;
-    }
-    item.updateQuality();
-  }
-}
+    expect(testItem.sellIn).toBe(-6);
+    expect(testItem.quality).toBe(0);
+  });
+});
 
-// console.log(items);
-updateQuality();
-// console.log(items);
+describe("Aged-Brie", () => {
+  it("Aged Brie increases in quality the older it gets", () => {
+    const testItem = new Brie("Aged Brie", 5, 3);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(4);
+    expect(testItem.quality).toBe(4);
+  });
+
+  it("Aged Brie increases in quality but not higher than 50", () => {
+    const testItem = new Brie("Aged Brie", -5, 50);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(-6);
+    expect(testItem.quality).toBe(50);
+  });
+});
+
+describe("Legendary-Items", () => {
+  it("Sulfuras, Hand of Ragnaros does not change", () => {
+    const testItem = new Legendary("Sulfuras, Hand of Ragnaros", 5, 80);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(5);
+    expect(testItem.quality).toBe(80);
+  });
+});
+
+describe("Backstage-Passes", () => {
+    it("Backstage passes greater than 10 days", () => {
+    const testItem = new Passes("Backstage passes to a TAFKAL80ETC concert", 12, 20);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(11);
+    expect(testItem.quality).toBe(21);
+  });
+
+  it("Backstage passes less than 10 days", () => {
+    const testItem = new Passes("Backstage passes to a TAFKAL80ETC concert", 8, 20);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(7);
+    expect(testItem.quality).toBe(22);
+  });
+
+  it("Backstage passes less than 5 days", () => {
+    const testItem = new Passes("Backstage passes to a TAFKAL80ETC concert", 4, 20);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(3);
+    expect(testItem.quality).toBe(23);
+  });
+
+  it("Backstage passes less than 0 days", () => {
+    const testItem = new Passes("Backstage passes to a TAFKAL80ETC concert", -1, 20);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(-2);
+    expect(testItem.quality).toBe(0);
+  });
+});
+
+describe("Conjured-Items", () => {
+  it("Conjured items degrade twice as fast", () => {
+    const testItem = new Conjured("Conjured", 5, 20);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(4);
+    expect(testItem.quality).toBe(18);
+  });
+
+  it("reduces quality of expired sellIn items of basic items by 4", () => {
+    const testItem = new Conjured("basic", -5, 6);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(-6);
+    expect(testItem.quality).toBe(2);
+  });
+
+  it("Quality cannot go below 0", () => {
+    const testItem = new Conjured("basic", -5, 1);
+    items.push(testItem);
+
+    updateQuality();
+
+    expect(testItem.sellIn).toBe(-6);
+    expect(testItem.quality).toBe(0);
+  });
+});
